@@ -1,0 +1,79 @@
+const {
+    Client,
+    PrivateKey,
+    AccountId,
+    TopicId,
+    TopicMessageQuery,
+    TopicCreateTransaction,
+    TopicMessageSubmitTransaction,
+} = require("@hashgraph/sdk");
+
+const axios = require('axios');
+
+var args = process.argv.slice(2);
+let topicId = args[0];
+let startTime = args[1];
+le
+
+async function main() {
+    let client;
+
+    try {
+        client = Client.forTestnet().setOperator(
+            AccountId.fromString("0.0.501886"),
+            PrivateKey.fromString("302e020100300506032b6570042204200ade448a3fe4d9861b192feee2ddf4d476a2d6ad8dbdd436f24d5853889cafa6")
+        );
+    } catch {
+        throw new Error(
+            "Environment variables HEDERA_NETWORK, OPERATOR_ID, and OPERATOR_KEY are required."
+        );
+    }
+
+    new TopicMessageQuery()
+        .setTopicId(TopicId.fromString(topicId))
+        .setStartTime(startTime)
+        .subscribe(client, (message) => {
+            let contentsj = Buffer.from(message.contents, "utf8").toString();
+            let contents = JSON.parse(contentsj);
+            let payload64 = contents.payload64;
+            console.log(message);
+            console.log(message.consensusTimestamp);
+
+            let snc_msg = {
+               contents: contents,
+               sequence_number: message.sequenceNumber.toString(),
+               number_of_chunks: message.chunks.length,
+               payload64: payload64,
+               payload: Buffer.from(payload64, 'base64').toString(), 
+               payload64_hash: contents.hash, 
+               instance: contents.instance,
+               state: 'pending',
+               //consensus_timestamp: message.consensusTimestamp.second *  1000000000 + message.consensusTimestamp.nanos,
+               consensus_timestamp_zulu: message.consensusTimestamp.toDate().toString(),
+               consensus_timestamp_sec: message.consensusTimestamp.seconds.toString(),
+               consensus_timestamp_nano: message.consensusTimestamp.nanos.toString(), 
+               topic_id: topicId,
+               running_hash: Buffer.from(message.runningHash, 'utf8').toString()  
+               }
+            
+            console.log(JSON.stringify(snc_msg));
+
+            axios
+              .post('https://hnowdemo.service-now.com/api/now/table/x_snc_hnow_message', 
+               snc_msg, { auth: { username: 'hedera', password: 'hedera'} })
+              .then(res => {
+              console.log(`statusCode: ${res.status}`)
+              //console.log(res)
+              })
+             .catch(error => {
+                console.error(error)
+             })
+
+          }
+        ); 
+
+}
+
+
+main();
+
