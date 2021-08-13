@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const {
     Client,
     PrivateKey,
@@ -17,13 +19,17 @@ let startTime = args[1];
 let instanceName = args[2];
 let tableName = args[3];
 
+if (topicId == null || topicId == "") { process.exit(1) }
+if (instanceName == null || instanceName == "") { process.exit(1) }
+if (tableName == null || tableName == "") { process.exit(1) }
+
 async function main() {
     let client;
 
     try {
         client = Client.forTestnet().setOperator(
-            AccountId.fromString("0.0.501886"),
-            PrivateKey.fromString("302e020100300506032b6570042204200ade448a3fe4d9861b192feee2ddf4d476a2d6ad8dbdd436f24d5853889cafa6")
+            AccountId.fromString(process.env.INSTANCE_ACCOUNT_ID),
+            PrivateKey.fromString(process.env.INSTANCE_PRIVATE_KEY)
         );
     } catch {
         throw new Error(
@@ -56,6 +62,7 @@ async function main() {
                payload: Buffer.from(payload64, 'base64').toString(), 
                payload64_hash: contents.hash, 
                instance: contents.instance,
+               participant: contents.participant,
                state: 'pending',
                //consensus_timestamp: message.consensusTimestamp.second *  1000000000 + message.consensusTimestamp.nanos,
                consensus_timestamp_zulu: message.consensusTimestamp.toDate().toString(),
@@ -70,7 +77,7 @@ async function main() {
                sys_id: contents.guid
                }
 
-            console.log("here3" + snc_msg);
+            console.log("snc_msg" + snc_msg);
 
             axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,{ auth: { username: 'hedera', password: 'hedera'},params: { 'sequence_number': sequence_number }} ).then(res => {if (res.data.result.length == 0 ) {console.log("Processing sequence number " + sequence_number)
 
@@ -102,8 +109,13 @@ async function main() {
         }
 
 function verify(message, signature, public_key) {
-     let result = PublicKey.fromString(public_key).verify(Uint8Array.from(message), Uint8Array.from(Buffer.from(signature, 'base64')))
-     return result;
+
+     if (message && signature && public_key) { 
+       return  PublicKey.fromString(public_key).verify(Uint8Array.from(message), Uint8Array.from(Buffer.from(signature, 'base64')))
+     } else {
+       console.log ("Verify parameter not set");
+       return 1;
+     }
 }
 
 main();

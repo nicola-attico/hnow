@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const {
     Client,
     PrivateKey,
@@ -16,8 +18,8 @@ async function main() {
 
     try {
         client = Client.forTestnet().setOperator(
-            AccountId.fromString("0.0.501886"),
-            PrivateKey.fromString("302e020100300506032b6570042204200ade448a3fe4d9861b192feee2ddf4d476a2d6ad8dbdd436f24d5853889cafa6")
+            AccountId.fromString(process.env.INSTANCE_ACCOUNT_ID),
+            PrivateKey.fromString(process.env.INSTANCE_PRIVATE_KEY)
         );
     } catch {
         throw new Error(
