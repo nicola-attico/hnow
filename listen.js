@@ -56,8 +56,6 @@ async function main() {
             let payload64 = contents.payload64;
             let sequence_number = message.sequenceNumber.toString();
 
-            console.log(Date() + " " + JSON.stringify(contents))
-
             let snc_msg = {
                contents: contents,
                sequence_number: sequence_number,
