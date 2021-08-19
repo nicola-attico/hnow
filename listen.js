@@ -48,7 +48,7 @@ async function main() {
         .setTopicId(TopicId.fromString(topicId))
         .setStartTime(startTime)
 
-    topicMessageQuery.subscribe(client, 
+    topicMessageQuery.subscribe(client,
             (error) => {console.log("ERROR " + JSON.stringify(error))},
             (message) => {
             let contentsj = Buffer.from(message.contents, "utf8").toString();
@@ -61,37 +61,40 @@ async function main() {
                sequence_number: sequence_number,
                number_of_chunks: message.chunks.length,
                payload64: payload64,
-               payload: Buffer.from(payload64, 'base64').toString(), 
-               payload64_hash: contents.hash, 
+               payload: Buffer.from(payload64, 'base64').toString(),
+               payload64_hash: contents.hash,
                instance: contents.instance,
                participant: contents.participant,
                state: 'pending',
                consensus_timestamp_sec: message.consensusTimestamp.seconds.toString(),
-               consensus_timestamp_nano: message.consensusTimestamp.nanos.toString(), 
+               consensus_timestamp_nano: message.consensusTimestamp.nanos.toString(),
                consensus_datetime: new Date(Math.abs(Number((message.consensusTimestamp.seconds) * 1000) + (Number(message.consensusTimestamp.nanos) / 1000000))).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
                topic_id: topicId,
                pubkey: contents.pubkey,
                signature: contents.signature,
-               signature_verification: verify(contents.hash, contents.signature, contents.pubkey), 
+               signature_verification: verify(contents.hash, contents.signature, contents.pubkey),
                running_hash: toHexString(message.runningHash),
                sys_id: contents.guid
                }
 
-            axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,{ auth: { username: 'hedera', password: 'Hedera123'},params: { 'sequence_number': sequence_number }} ).then(res => {if (res.data.result.length == 0 ) {console.log(Date() + "Processing sequence number " + sequence_number)
-
-            axios
-              .post('https://' + instanceName + '.service-now.com/api/now/table/' + tableName, 
-               snc_msg, { auth: { username: 'hedera', password: 'Hedera123'} })
-              .then(res => {
-              console.log(`statusCode: ${res.status}`)
-              })
-             .catch(error => {
-                console.error("error")
-             })
-
-
-} else {console.log(Date() + "Skipping sequence number" + sequence_number)}})
-
+            axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,
+                { auth: { username: 'hedera', password: 'Hedera123'},params: { 'sequence_number': sequence_number }}
+                ).then(
+                    res => {
+                        if (res.data.result.length == 0 ) {
+                            console.log(Date() + "Processing sequence number " + sequence_number)
+                            axios
+                                .post('https://' + instanceName + '.service-now.com/api/now/table/' + tableName,
+                                    snc_msg, { auth: { username: 'hedera', password: 'Hedera123'} }
+                                ).then(res => {
+                                  console.log(`statusCode: ${res.status}`)
+                                }).catch(error => {
+                                    console.error("error")
+                                })
+                        } else {
+                            console.log(Date() + "Skipping sequence number" + sequence_number)
+                        }
+                    })
           }
         );
 
@@ -101,7 +104,7 @@ function sleep(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
-} 
+}
 
 function toHexString(byteArray) {
         var s = '0x';
@@ -113,7 +116,7 @@ function toHexString(byteArray) {
 
 function verify(message, signature, public_key) {
 
-     if (message && signature && public_key) { 
+     if (message && signature && public_key) {
        return  PublicKey.fromString(public_key).verify(Uint8Array.from(message), Uint8Array.from(Buffer.from(signature, 'base64')))
      } else {
        console.log ("Verify parameter not set");
