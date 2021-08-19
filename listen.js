@@ -5,6 +5,7 @@ const {
     PrivateKey,
     PublicKey,
     AccountId,
+    Timestamp,
     TopicId,
     TopicMessageQuery,
     TopicCreateTransaction,
@@ -15,9 +16,15 @@ const axios = require('axios');
 
 var args = process.argv.slice(2);
 let topicId = args[0];
-let startTime = args[1];
-let instanceName = args[2];
-let tableName = args[3];
+let startTimeSec = args[1];
+let startTimeNano = args[2];
+let instanceName = args[3];
+let tableName = args[4];
+
+console.log(Date() + " *************** STARTUP ***************")
+
+let startTime = new Timestamp(startTimeSec, startTimeNano);
+
 
 if (topicId == null || topicId == "") { process.exit(1) }
 if (instanceName == null || instanceName == "") { process.exit(1) }
@@ -33,26 +40,23 @@ async function main() {
         );
     } catch {
         throw new Error(
-            "Environment variables HEDERA_NETWORK, OPERATOR_ID, and OPERATOR_KEY are required."
+            "Environment variables not set."
         );
     }
 
-    console.log("here");
-
-    new TopicMessageQuery()
+    let topicMessageQuery = new TopicMessageQuery()
         .setTopicId(TopicId.fromString(topicId))
         .setStartTime(startTime)
-        .subscribe(client, (message) => {
+
+    topicMessageQuery.subscribe(client, 
+            (error) => {console.log("ERROR " + JSON.stringify(error))},
+            (message) => {
             let contentsj = Buffer.from(message.contents, "utf8").toString();
             let contents = JSON.parse(contentsj);
             let payload64 = contents.payload64;
             let sequence_number = message.sequenceNumber.toString();
 
-            console.log("hash " + contents.hash);
-            console.log("sig " + contents.signature);
-            console.log("pk " + contents.pubkey);
-
-            console.log(JSON.stringify(contents))
+            console.log(Date() + " " + JSON.stringify(contents))
 
             let snc_msg = {
                contents: contents,
@@ -64,8 +68,6 @@ async function main() {
                instance: contents.instance,
                participant: contents.participant,
                state: 'pending',
-               //consensus_timestamp: message.consensusTimestamp.second *  1000000000 + message.consensusTimestamp.nanos,
-               consensus_timestamp_zulu: message.consensusTimestamp.toDate().toString(),
                consensus_timestamp_sec: message.consensusTimestamp.seconds.toString(),
                consensus_timestamp_nano: message.consensusTimestamp.nanos.toString(), 
                consensus_datetime: new Date(Math.abs(Number((message.consensusTimestamp.seconds) * 1000) + (Number(message.consensusTimestamp.nanos) / 1000000))).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
@@ -77,31 +79,34 @@ async function main() {
                sys_id: contents.guid
                }
 
-            console.log("snc_msg" + snc_msg);
-
-            axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,{ auth: { username: 'hedera', password: 'hedera'},params: { 'sequence_number': sequence_number }} ).then(res => {if (res.data.result.length == 0 ) {console.log("Processing sequence number " + sequence_number)
+            axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,{ auth: { username: 'hedera', password: 'Hedera123'},params: { 'sequence_number': sequence_number }} ).then(res => {if (res.data.result.length == 0 ) {console.log(Date() + "Processing sequence number " + sequence_number)
 
             axios
               .post('https://' + instanceName + '.service-now.com/api/now/table/' + tableName, 
-               snc_msg, { auth: { username: 'hedera', password: 'hedera'} })
+               snc_msg, { auth: { username: 'hedera', password: 'Hedera123'} })
               .then(res => {
               console.log(`statusCode: ${res.status}`)
-              //console.log(res)
               })
              .catch(error => {
                 console.error("error")
              })
 
 
-} else {console.log("Skipping sequence number" + sequence_number)}})
+} else {console.log(Date() + "Skipping sequence number" + sequence_number)}})
 
           }
-        ); 
+        );
 
 }
 
-        function toHexString(byteArray) {
-            var s = '0x';
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+} 
+
+function toHexString(byteArray) {
+        var s = '0x';
             for (j = 0; j < byteArray.length; j++) {
                 s += ('0' + (byteArray[j] & 0xFF).toString(16)).slice(-2);
             }
@@ -119,4 +124,3 @@ function verify(message, signature, public_key) {
 }
 
 main();
-
