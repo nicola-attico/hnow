@@ -25,7 +25,6 @@ console.log(Date() + " *************** STARTUP ***************")
 
 let startTime = new Timestamp(startTimeSec, startTimeNano);
 
-
 if (topicId == null || topicId == "") { process.exit(1) }
 if (instanceName == null || instanceName == "") { process.exit(1) }
 if (tableName == null || tableName == "") { process.exit(1) }
