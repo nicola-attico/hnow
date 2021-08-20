@@ -6,45 +6,64 @@ const {
     AccountId,
     TopicId,
     TopicMessageQuery,
+    Timestamp
 } = require("@hashgraph/sdk");
 
 console.log(Date() + " *************** STARTUP ***************")
 
-let startTime = 0;
+let startTime = new Timestamp(0);
 const topicId = process.env.TOPIC_ID;
+const accountId = process.env.INSTANCE_ACCOUNT_ID;
+const privateKey = process.env.INSTANCE_PRIVATE_KEY;
+
 let client;
 
 async function main() {
-    try {
-        client = Client.forTestnet().setOperator(
-            AccountId.fromString(process.env.INSTANCE_ACCOUNT_ID),
-            PrivateKey.fromString(process.env.INSTANCE_PRIVATE_KEY)
-        );
-    } catch {
-        throw new Error(
-            "Environment variables not set."
-        );
-    }
-    subscribe();
+    await subscribe();
+    console.log("ending main");
 }
 
-function subscribe() {
-    let topicMessageQuery = new TopicMessageQuery()
-        .setTopicId(TopicId.fromString(topicId))
-        .setStartTime(startTime);
+async function subscribe() {
+    try {
+        client = Client.forTestnet().setOperator(
+            AccountId.fromString(accountId),
+            PrivateKey.fromString(privateKey)
+        );
+        console.log("Subscribing");
+        // add 1 nano second to start time to avoid receiving duplicates
+        startTime = startTime.plusNanos(1);
+        let topicMessageQuery = new TopicMessageQuery()
+            .setTopicId(TopicId.fromString(topicId))
+            .setStartTime(startTime);
 
-    topicMessageQuery.subscribe(client,
-        (error) => {
-            console.log("ERROR " + JSON.stringify(error))
-            // start a new subscription in 5 seconds
-            setTimeout(subscribe(subscribeTime, topicId), 5000);
-        },
-        (message) => {
-            // handle message here
-            let sequence_number = message.sequenceNumber.toString();
-            startTime = message.consensusTimestamp.plusNanos(1);
-            console.log(sequence_number);
-        });
+        topicMessageQuery.subscribe(client,
+            (error) => {
+                console.error("ERROR " + JSON.stringify(error))
+                // start a new subscription in 5 seconds
+                setTimeout(subscribe, 5000);
+            },
+            (message) => {
+                // handle message here
+                let sequence_number = message.sequenceNumber.toString();
+                startTime = message.consensusTimestamp;
+                console.log(sequence_number);
+            });
+    } catch (error) {
+        try {
+            client.close();
+        } catch(closeError) {
+            console.error(closeError);
+        }
+        // log error, wait 5s and restart
+        console.error(error);
+        setTimeout(subscribe, 5000);
+    }
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
 
 main();
