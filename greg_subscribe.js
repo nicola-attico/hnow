@@ -46,7 +46,7 @@ async function subscribe() {
                 // handle message here
                 let sequence_number = message.sequenceNumber.toString();
                 startTime = message.consensusTimestamp;
-                console.log(sequence_number);
+                console.log("message " + sequence_number + " : " + message.contents);
             });
     } catch (error) {
         try {

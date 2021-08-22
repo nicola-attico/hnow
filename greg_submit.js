@@ -16,6 +16,8 @@ const privateKey = process.env.INSTANCE_PRIVATE_KEY;
 async function main() {
     console.log(Date() + " *************** STARTUP ***************")
 
+    let counter = 0
+
     // should check constants are set here
     // loop for ever
     while (true) {
@@ -24,16 +26,23 @@ async function main() {
                 AccountId.fromString(accountId),
                 PrivateKey.fromString(privateKey)
             );
+
             while (true) {
+
+    counter = counter + 1
+    console.log("counter " + counter)
+
                 let receipt = await (
                     await new TopicMessageSubmitTransaction()
                         .setTopicId(topicId)
-                        .setMessage("message")
+                        .setMessage("message " + counter)
                         .execute(client)
                 ).getReceipt(client);
 
+
                 console.log(JSON.stringify(receipt));
-                await sleep(10000);
+                //sleep between submits
+                await sleep(250000);
             }
         } catch (error) {
             try {
@@ -49,6 +58,7 @@ async function main() {
 }
 
 function sleep(ms) {
+    console.log("Sleeping " + ms + " ms...")
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
