@@ -1,5 +1,11 @@
+echo "*** PRE ***"
+./ps_loader.sh
 
-kill $1
+echo "*** KILL ***"
+children=$(ps -o pid= --ppid $1)
+echo $children
+kill -9 $1
+kill -9 $children
 
-pkill -P $1
-
+echo "*** POST ***"
+./ps_loader.sh

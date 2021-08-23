@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 require('dotenv').config()
 
 const {
@@ -50,12 +52,15 @@ async function main() {
     topicMessageQuery.subscribe(client, 
             (error) => {console.log("ERROR " + JSON.stringify(error))},
             (message) => {
-            let contentsj = Buffer.from(message.contents, "utf8").toString();
+            let contents64 = Buffer.from(message.contents, "utf-8").toString();
+            let contentsj = Buffer.from(contents64,"base64").toString();
+            console.log("contentsj " + contentsj);
             let contents = JSON.parse(contentsj);
             let payload64 = contents.payload64;
             let sequence_number = message.sequenceNumber.toString();
 
             let snc_msg = {
+               contents64: contents64,
                contents: contents,
                sequence_number: sequence_number,
                number_of_chunks: message.chunks.length,
@@ -69,6 +74,7 @@ async function main() {
                consensus_timestamp_nano: message.consensusTimestamp.nanos.toString(), 
                consensus_datetime: new Date(Math.abs(Number((message.consensusTimestamp.seconds) * 1000) + (Number(message.consensusTimestamp.nanos) / 1000000))).toISOString().replace(/T/, ' ').replace(/\..+/, ''),
                topic_id: topicId,
+               account_id: process.env.INSTANCE_ACCOUNT_ID,
                pubkey: contents.pubkey,
                signature: contents.signature,
                signature_verification: verify(contents.hash, contents.signature, contents.pubkey), 
