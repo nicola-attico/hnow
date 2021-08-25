@@ -53,6 +53,7 @@ async function main() {
             (error) => {console.log("ERROR " + JSON.stringify(error))},
             (message) => {
             let contents64 = Buffer.from(message.contents, "utf-8").toString();
+            console.log("contents64" + contents64);
             let contentsj = Buffer.from(contents64,"base64").toString();
             console.log("contentsj " + contentsj);
             let contents = JSON.parse(contentsj);
