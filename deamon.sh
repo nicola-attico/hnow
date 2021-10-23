@@ -7,7 +7,7 @@ date
 
 echo "start"
 
-node listen.js $1 $2 $3 $4 $5 >> logs/listen_$1.log 2>&1 &
+node listen.js $1 $2 $3 $4 $5 >> logs/listen_$1_$4.log 2>&1 &
 
 pid=$!
 

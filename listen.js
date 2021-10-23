@@ -27,9 +27,9 @@ console.log(Date() + " *************** STARTUP ***************")
 
 let startTime = new Timestamp(startTimeSec, startTimeNano);
 
-if (topicId == null || topicId == "") { process.exit(1) }
-if (instanceName == null || instanceName == "") { process.exit(1) }
-if (tableName == null || tableName == "") { process.exit(1) }
+if (topicId == null || topicId == "") { console.log("EXIT"); process.exit(1) }
+if (instanceName == null || instanceName == "") { console.log("EXIT"); process.exit(1) }
+if (tableName == null || tableName == "") { console.log("EXIT"); process.exit(1) }
 
 async function main() {
     let client;
@@ -83,20 +83,29 @@ async function main() {
                sys_id: contents.guid
                }
 
-            axios.get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,{ auth: { username: 'hedera', password: 'Hedera123'},params: { 'sequence_number': sequence_number }} ).then(res => {if (res.data.result.length == 0 ) {console.log(Date() + "Processing sequence number " + sequence_number)
-
             axios
-              .post('https://' + instanceName + '.service-now.com/api/now/table/' + tableName, 
-               snc_msg, { auth: { username: 'hedera', password: 'Hedera123'} })
+              .get("https://" + instanceName + ".service-now.com//api/now/table/" + tableName,
+                 { auth: { username: 'hedera', password: 'Hedera123'},
+                 params: { 'sequence_number': sequence_number }} )
               .then(res => {
-              console.log(`statusCode: ${res.status}`)
-              })
-             .catch(error => {
-                console.error("error")
+                 if (res.data.result.length == 0 ) {
+                   console.log(Date() + "Processing sequence number " + sequence_number)
+
+                   axios
+                     .post('https://' + instanceName + '.service-now.com/api/now/table/' + tableName, 
+                       snc_msg, { auth: { username: 'hedera', password: 'Hedera123'} })
+                         .then(res => {
+                         console.log(`statusCode: ${res.status}`)
+                         })
+                         .catch(error => {
+                           console.error("AXIOS POST ERROR " + JSON.stringify(error))
+                         })
+
+
+                } else {
+                  console.log(Date() + "Skipping sequence number" + sequence_number)
+                }
              })
-
-
-} else {console.log(Date() + "Skipping sequence number" + sequence_number)}})
 
           }
         );
