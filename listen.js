@@ -53,9 +53,9 @@ async function main() {
             (error) => {console.log("ERROR " + JSON.stringify(error))},
             (message) => {
             let contents64 = Buffer.from(message.contents, "utf-8").toString();
-            console.log("contents64" + contents64);
+//            console.log("contents64" + contents64);
             let contentsj = Buffer.from(contents64,"base64").toString();
-            console.log("contentsj " + contentsj);
+//            console.log("contentsj " + contentsj);
             let contents = JSON.parse(contentsj);
             let payload64 = contents.payload64;
             let sequence_number = message.sequenceNumber.toString();
