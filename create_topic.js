@@ -5,7 +5,6 @@ require('dotenv').config()
 const {
   Client,
   TopicCreateTransaction,
-  TopicMessageSubmitTransaction,
   PrivateKey,
   AccountId
 } = require('@hashgraph/sdk')
@@ -31,4 +30,4 @@ async function main () {
   process.stdout.write(createReceipt.topicId.toString())
 }
 
-void main()
+main()

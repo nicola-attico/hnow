@@ -3,18 +3,19 @@
 require('dotenv').config()
 
 const {
-    PrivateKey
-} = require("@hashgraph/sdk");
+  PrivateKey
+} = require('@hashgraph/sdk')
 
-async function main() {
+async function main () {
+  const privateKey = await PrivateKey.generate()
+  const publicKey = privateKey.publicKey
 
-const privateKey = await PrivateKey.generate();
-const publicKey = privateKey.publicKey;
+  const output = {
+    privateKey: privateKey.toString(),
+    publicKey: publicKey.toString()
+  }
 
-const output = { privateKey: privateKey.toString(),
-                 publicKey: publicKey.toString() }
-
-process.stdout.write(JSON.stringify(output));
+  process.stdout.write(JSON.stringify(output))
 }
 
-void main();
+main()
